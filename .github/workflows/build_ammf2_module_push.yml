@@ -18,6 +18,7 @@ jobs:
 
       - name: Copy files
         run: |
+          ls
           find . -type f -not -path "./ammf2/*" | while read -r file; do
            # 去除路径开头的./
            relative_path=${file#./}
