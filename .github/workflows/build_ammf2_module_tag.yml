@@ -49,7 +49,6 @@ jobs:
           # 获取最新标签
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "Latest tag: $LATEST_TAG"
-          # 触发AMMF2的构建工作流
-          gh workflow run build_module_release_tag.yml -f tag_name=$LATEST_TAG
+          ./build.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
