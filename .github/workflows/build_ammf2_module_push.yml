@@ -17,8 +17,6 @@ jobs:
       - name: Clone AMMF2 repository
         run: |
           git clone --depth=1 https://github.com/Aurora-Nasa-1/AMMF2.git ammf2
-          cd ammf2
-          rm -rf .git
 
       - name: Copy files
         run: |
