@@ -45,6 +45,6 @@ jobs:
         run: |
           cd ./ammf2
           chmod +x ./build.sh
-          sh ./build.sh
+          bash ./build.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
