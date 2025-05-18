@@ -49,8 +49,9 @@ jobs:
 
       - name: Get latest tag
         run: |
+          cd ./overlay
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-          echo "$LATEST_TAG" > ./ammf2/latest_tag.txt
+          echo "$LATEST_TAG" > ../ammf2/latest_tag.txt
 
       - name: Make module.prop
         run: |
