@@ -21,24 +21,45 @@ jobs:
       - name: Copy files
         run: |
           cd ./overlay
-          find . -type f -not -path "./ammf2/*" | while read -r file; do
-           # 去除路径开头的./
-           relative_path=${file#./}
+          
+          # Step 1: Copy unique top-level files and directories from ./overlay to ../ammf2.
+          # This uses --ignore-existing to only copy items that do not exist in the target.
+          # -a: archive mode (recursive, preserves permissions, timestamps, etc.)
+          # --exclude '/ammf2': exclude the ammf2 directory within ./overlay.
+          # This command copies new files and directories from ./overlay to ../ammf2.
+          # For directories that are unique to ./overlay, it recursively copies their content.
+          # Existing files and directories in ../ammf2 are NOT overwritten by this step.
+          rsync -a --ignore-existing --exclude '/ammf2' ./ ../ammf2/
+          echo "Copied unique top-level items from overlay to ammf2."
+          
+          # Step 2: Find top-level directories that exist in both ./overlay and ../ammf2.
+          # Then, for each shared directory, recursively copy its content from ./overlay to ../ammf2,
+          # overwriting files with the same name in the target, adding new files/subdirectories,
+          # but leaving files/subdirectories unique to the target untouched.
+          # We use find with maxdepth 1 to only look at top-level items.
+          find ./ -maxdepth 1 -type d -not -name '.' -not -name 'ammf2' | while read -r dir; do
+            # Remove leading ./ from the directory path
+            relative_dir=${dir#./}
+            target_dir="../ammf2/$relative_dir"
 
-              # 检查文件是否存在于ammf2目录中
-           if [ ! -f "../ammf2/$relative_path" ]; then
-              # 创建目标目录（如果不存在）
-              target_dir="../ammf2/$(dirname "$relative_path")"
-              mkdir -p "$target_dir"
-
-             # 复制文件
-             cp "$file" "../ammf2/$relative_path"
-             echo "已复制: $relative_path"
-           fi
+            # Check if the directory also exists in ../ammf2
+            if [ -d "$target_dir" ]; then
+              echo "Processing shared directory: $relative_dir"
+              # Use rsync to copy the *contents* of the source directory into the target directory.
+              # -a: archive mode (recursive, preserves permissions, timestamps, etc.)
+              # This command will overwrite files in $target_dir that have the same name as files in ./$relative_dir,
+              # add files/subdirectories from ./$relative_dir that don't exist in $target_dir,
+              # and leave files/subdirectories in $target_dir that don't exist in ./$relative_dir untouched.
+              rsync -a "./$relative_dir/" "$target_dir/"
+              echo "Copied content of shared directory $relative_dir, overwriting files."
+            fi
           done
+
+          # Keep the specific copies for customize.sh and service.sh as they have different target paths.
+          # These specific copies will overwrite the destination files if they exist.
           cp ./customize.sh ../ammf2/files/scripts/install_custom_script.sh
           cp ./service.sh ../ammf2/files/scripts/service_script.sh
-
+          echo "Copied customize.sh and service.sh to specific script paths."
       - name: Get current time
         run: |
           cd ./ammf2
