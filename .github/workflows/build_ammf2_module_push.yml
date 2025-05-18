@@ -1,0 +1,49 @@
+name: Build AMMF2 Module
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  run-ammf2-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout AMMF2 repository
+        uses: actions/checkout@v4
+        with:
+          repository: "Aurora-Nasa-1/AMMF2"
+          path: "./ammf2"
+          fetch-depth: 0
+
+      - name: Copy files
+        run: |
+          find . -type f -not -path "./ammf2/*" | while read -r file; do
+           # 去除路径开头的./
+           relative_path=${file#./}
+
+              # 检查文件是否存在于ammf2目录中
+           if [ ! -f "./ammf2/$relative_path" ]; then
+              # 创建目标目录（如果不存在）
+              target_dir="./ammf2/$(dirname "$relative_path")"
+              mkdir -p "$target_dir"
+
+             # 复制文件
+             cp "$file" "./ammf2/$relative_path"
+             echo "已复制: $relative_path"
+           fi
+          done
+          cp customize.sh ./ammf2/files/scripts/install_custom_script.sh
+          cp service.sh ./ammf2/files/scripts/service_script.sh
+          
+      - name: Trigger AMMF2 workflows
+        run: |
+          cd ./ammf2
+          # 获取最新标签
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "Latest tag: $LATEST_TAG"
+
+          # 触发AMMF2的构建工作流
+          gh workflow run build_module_commit.yml -f tag_name=$LATEST_TAG
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
