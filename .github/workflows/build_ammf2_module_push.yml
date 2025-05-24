@@ -21,22 +21,8 @@ jobs:
       - name: Copy files
         run: |
           cd ./overlay
-          
-          # Step 1: Copy unique top-level files and directories from ./overlay to ../ammf2.
-          # This uses --ignore-existing to only copy items that do not exist in the target.
-          # -a: archive mode (recursive, preserves permissions, timestamps, etc.)
-          # --exclude '/ammf2': exclude the ammf2 directory within ./overlay.
-          # This command copies new files and directories from ./overlay to ../ammf2.
-          # For directories that are unique to ./overlay, it recursively copies their content.
-          # Existing files and directories in ../ammf2 are NOT overwritten by this step.
           rsync -a --ignore-existing --exclude '/ammf2' ./ ../ammf2/
-          echo "Copied unique top-level items from overlay to ammf2."
-          
-          # Step 2: Find top-level directories that exist in both ./overlay and ../ammf2.
-          # Then, for each shared directory, recursively copy its content from ./overlay to ../ammf2,
-          # overwriting files with the same name in the target, adding new files/subdirectories,
-          # but leaving files/subdirectories unique to the target untouched.
-          # We use find with maxdepth 1 to only look at top-level items.
+          echo "Copied unique top-level items from overlay to ammf2."  
           find ./ -maxdepth 1 -type d -not -name '.' -not -name 'ammf2' | while read -r dir; do
             # Remove leading ./ from the directory path
             relative_dir=${dir#./}
@@ -45,11 +31,6 @@ jobs:
             # Check if the directory also exists in ../ammf2
             if [ -d "$target_dir" ]; then
               echo "Processing shared directory: $relative_dir"
-              # Use rsync to copy the *contents* of the source directory into the target directory.
-              # -a: archive mode (recursive, preserves permissions, timestamps, etc.)
-              # This command will overwrite files in $target_dir that have the same name as files in ./$relative_dir,
-              # add files/subdirectories from ./$relative_dir that don't exist in $target_dir,
-              # and leave files/subdirectories in $target_dir that don't exist in ./$relative_dir untouched.
               rsync -a "./$relative_dir/" "$target_dir/"
               echo "Copied content of shared directory $relative_dir, overwriting files."
             fi
