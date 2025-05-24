@@ -63,7 +63,7 @@ jobs:
       - name: Get current time
         run: |
           cd ./ammf2
-          time=$(date +%Y%m%d%H)
+          time=$(date +%Y%m%d)
           echo "$time" > current_time.txt
 
       - name: Get latest tag
